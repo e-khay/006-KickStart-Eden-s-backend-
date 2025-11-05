@@ -1,0 +1,45 @@
+import express from "express";
+import User from "../models/user.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
+const router = express.Router();
+
+// Get all users (no password)
+router.get("/", async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get user by id
+router.get("/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Update user (profile fields only)
+router.put("/:id", async (req, res) => {
+  try {
+    const fields = { ...req.body };
+    // do not allow updating password here
+    delete fields.password;
+    const updated = await User.findByIdAndUpdate(req.params.id, fields, { new: true }).select("-password");
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+export default router;
